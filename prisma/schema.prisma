@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("teacher")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  exams     Exam[]
+}
+
+model Exam {
+  id             String       @id @default(uuid())
+  title          String
+  subject        String
+  date           DateTime
+  description    String?
+  totalQuestions Int
+  maxScore       Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  students       Student[]
+  submissions    Submission[]
+}
+
+model Student {
+  id          String       @id @default(uuid())
+  name        String
+  exams       Exam[]
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Submission {
+  id           String         @id @default(uuid())
+  exam         Exam           @relation(fields: [examId], references: [id])
+  examId       String
+  student      Student        @relation(fields: [studentId], references: [id])
+  studentId    String
+  status       String         @default("not_submitted") // not_submitted, submitted, graded
+  submittedAt  DateTime?
+  imageUrl     String?
+  gradingResult GradingResult?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model GradingResult {
+  id               String            @id @default(uuid())
+  submission       Submission        @relation(fields: [submissionId], references: [id])
+  submissionId     String            @unique
+  totalScore       Int
+  maxPossibleScore Int
+  gradedAt         DateTime          @default(now())
+  answers          GradedAnswer[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model GradedAnswer {
+  id               String        @id @default(uuid())
+  gradingResult    GradingResult @relation(fields: [gradingResultId], references: [id])
+  gradingResultId  String
+  questionNumber   Int
+  studentAnswer    String
+  correctAnswer    String
+  score            Int
+  maxScore         Int
+  confidence       Float
+  feedback         String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
